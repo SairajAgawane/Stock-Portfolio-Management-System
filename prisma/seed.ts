@@ -9,8 +9,8 @@ async function main() {
     create: {
       name: 'Demo Investor',
       email: 'demo@example.com',
-      // Development-only placeholder. Phase 2 will replace this with bcrypt hashing.
-      passwordHash: 'phase2-password-hash-placeholder',
+      // Demo-only account. Change this password before any shared deployment.
+      passwordHash: '$2a$12$6v0Wmuc27.qQmECu5LWIWe29hS2bVpDXJSAhiRrzX30gVajoaH3jK',
       phone: '+91-9000000000',
     },
   });
