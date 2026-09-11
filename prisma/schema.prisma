@@ -1,0 +1,106 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              Int             @id @default(autoincrement())
+  name            String          @db.VarChar(120)
+  email           String          @unique @db.VarChar(255)
+  passwordHash    String          @map("password_hash") @db.VarChar(255)
+  phone           String?         @db.VarChar(30)
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+  buyTransactions BuyTransaction[]
+  sellTransactions SellTransaction[]
+  portfolios      Portfolio[]
+
+  @@map("users")
+}
+
+model Company {
+  id        Int      @id @default(autoincrement())
+  name      String   @db.VarChar(160)
+  sector    String?  @db.VarChar(100)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  stocks    Stock[]
+
+  @@index([name])
+  @@map("companies")
+}
+
+model Stock {
+  id              Int             @id @default(autoincrement())
+  companyId       Int             @map("company_id")
+  symbol          String          @db.VarChar(20)
+  exchange        String          @db.VarChar(30)
+  currency        String          @default("INR") @db.Char(3)
+  currentPrice    Decimal         @default(0) @map("current_price") @db.Decimal(19, 4)
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+  company         Company         @relation(fields: [companyId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  buyTransactions BuyTransaction[]
+  sellTransactions SellTransaction[]
+  portfolios      Portfolio[]
+
+  @@unique([symbol, exchange])
+  @@index([companyId])
+  @@index([symbol])
+  @@map("stocks")
+}
+
+model BuyTransaction {
+  id             Int      @id @default(autoincrement())
+  userId         Int      @map("user_id")
+  stockId        Int      @map("stock_id")
+  quantity       Decimal  @db.Decimal(19, 6)
+  pricePerShare  Decimal  @map("price_per_share") @db.Decimal(19, 4)
+  tradeDate      DateTime @map("trade_date")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+  user           User     @relation(fields: [userId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  stock          Stock    @relation(fields: [stockId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@index([userId, tradeDate])
+  @@index([userId, stockId])
+  @@index([stockId, tradeDate])
+  @@map("buy_transactions")
+}
+
+model SellTransaction {
+  id             Int      @id @default(autoincrement())
+  userId         Int      @map("user_id")
+  stockId        Int      @map("stock_id")
+  quantity       Decimal  @db.Decimal(19, 6)
+  pricePerShare  Decimal  @map("price_per_share") @db.Decimal(19, 4)
+  tradeDate      DateTime @map("trade_date")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+  user           User     @relation(fields: [userId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  stock          Stock    @relation(fields: [stockId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@index([userId, tradeDate])
+  @@index([userId, stockId])
+  @@index([stockId, tradeDate])
+  @@map("sell_transactions")
+}
+
+model Portfolio {
+  id           Int      @id @default(autoincrement())
+  userId       Int      @map("user_id")
+  stockId      Int      @map("stock_id")
+  quantityHeld Decimal  @default(0) @map("quantity_held") @db.Decimal(19, 6)
+  averageCost  Decimal  @default(0) @map("average_cost") @db.Decimal(19, 4)
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  user         User     @relation(fields: [userId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  stock        Stock    @relation(fields: [stockId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@unique([userId, stockId])
+  @@index([userId])
+  @@map("portfolio")
+}
