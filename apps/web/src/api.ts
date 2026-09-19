@@ -6,10 +6,14 @@ export type Transaction = { stock_id: number; symbol: string; company_name: stri
 export type Summary = { invested_amount: number | string; market_value: number | string; unrealized_pnl: number | string; realizedPnl: number | string };
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
-  const response = await fetch(path, { ...options, credentials: 'include', headers: { 'Content-Type': 'application/json', ...(options?.headers ?? {}) } });
+  const apiBaseUrl = (import.meta.env.VITE_API_URL ?? '').replace(/\/$/, '');
+  if (!apiBaseUrl && !window.location.hostname.includes('localhost')) {
+    throw new Error('Backend API is not configured for this deployment.');
+  }
+  const response = await fetch(`${apiBaseUrl}${path}`, { ...options, credentials: 'include', headers: { 'Content-Type': 'application/json', ...(options?.headers ?? {}) } });
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
-    throw new Error(error.message ?? 'Request failed');
+    throw new Error(error.message ?? `Request failed (${response.status})`);
   }
   return response.status === 204 ? (undefined as T) : response.json();
 }
