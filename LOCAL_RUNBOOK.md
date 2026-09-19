@@ -47,3 +47,7 @@ pnpm --dir apps/web build
 ```
 
 Never commit `.env`; use `.env.example` as the safe template.
+
+## Production deployment architecture
+
+Use Vercel for `apps/web` and Railway for `apps/api` plus a managed MySQL service. Railway provides MySQL connection variables such as `MYSQL_URL`; set the API service's `DATABASE_URL` to that value, set `JWT_SECRET`, set `WEB_ORIGIN` to the Vercel URL, and generate a public API domain. Then set the Vercel project's `VITE_API_URL` to the Railway API URL and redeploy.
