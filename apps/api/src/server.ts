@@ -3,10 +3,11 @@ import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import { prisma } from './lib/prisma';
-import { requireAuth } from './middleware/auth';
+import { requireAdmin, requireAuth } from './middleware/auth';
 import { authRouter } from './routes/auth';
 import { catalogRouter } from './routes/catalog';
 import { portfolioRouter } from './routes/portfolio';
+import { adminRouter } from './routes/admin';
 import { ZodError } from 'zod';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
@@ -27,6 +28,7 @@ app.get('/api/health', async (_req, res) => {
 app.use('/api/auth', authRouter);
 app.use('/api/catalog', requireAuth, catalogRouter);
 app.use('/api/portfolio', requireAuth, portfolioRouter);
+app.use('/api/admin', requireAuth, requireAdmin, adminRouter);
 
 app.use((error: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   if (error instanceof ZodError) return res.status(400).json({ code: 'VALIDATION_ERROR', message: 'Request validation failed', details: error.flatten() });

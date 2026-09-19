@@ -1,32 +1,38 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
-import { api, Holding, Stock, Summary, Transaction, User } from './api';
+import { api, AdminOverview, Holding, Stock, Summary, Transaction, User } from './api';
 
 type Page = 'overview' | 'holdings' | 'transactions' | 'catalog';
 const money = (value: number | string | undefined, currency = 'INR') => new Intl.NumberFormat('en-IN', { style: 'currency', currency, maximumFractionDigits: 2 }).format(Number(value ?? 0));
 const number = (value: number | string | undefined) => Number(value ?? 0).toLocaleString('en-IN', { maximumFractionDigits: 4 });
 
 function Auth({ onLogin }: { onLogin: (user: User) => void }) {
-  const [mode, setMode] = useState<'login' | 'register'>('login');
+  const [mode, setMode] = useState<'login' | 'register' | 'admin'>('login');
   const [form, setForm] = useState({ name: '', email: '', password: '', phone: '' });
   const [error, setError] = useState('');
   async function submit(event: FormEvent) {
     event.preventDefault(); setError('');
-    try { const result = mode === 'login' ? await api.login(form) : await api.register(form); onLogin(result.user); }
+    try { const result = mode === 'register' ? await api.register(form) : mode === 'admin' ? await api.adminLogin(form) : await api.login(form); onLogin(result.user); }
     catch (err) { setError(err instanceof Error ? err.message : 'Unable to continue'); }
   }
-  return <main className="auth-shell"><section className="auth-card"><div className="brand-mark">PD</div><p className="eyebrow">PERSONAL WEALTH WORKSPACE</p><h1>{mode === 'login' ? 'Welcome back.' : 'Create your desk.'}</h1><p className="muted">Track holdings, transactions, and performance in one calm view.</p><form onSubmit={submit}>
+  return <main className="auth-shell"><section className="auth-card"><div className="brand-mark">PD</div><p className="eyebrow">{mode === 'admin' ? 'ADMINISTRATOR ACCESS' : 'PERSONAL WEALTH WORKSPACE'}</p><h1>{mode === 'login' ? 'Welcome back.' : mode === 'admin' ? 'Admin sign in.' : 'Create your desk.'}</h1><p className="muted">{mode === 'admin' ? 'Review all users, portfolios, and investment activity.' : 'Track holdings, transactions, and performance in one calm view.'}</p><form onSubmit={submit}>
     {mode === 'register' && <input placeholder="Full name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required />}
     <input type="email" placeholder="Email address" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} required />
     <input type="password" placeholder="Password" minLength={8} value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} required />
     {mode === 'register' && <input placeholder="Phone (optional)" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} />}
-    {error && <p className="error">{error}</p>}<button className="primary wide">{mode === 'login' ? 'Sign in' : 'Create account'}</button>
-  </form><button className="link-button" onClick={() => setMode(mode === 'login' ? 'register' : 'login')}>{mode === 'login' ? 'Need an account? Register' : 'Already registered? Sign in'}</button></section></main>;
+    {error && <p className="error">{error}</p>}<button className="primary wide">{mode === 'login' ? 'Sign in' : mode === 'admin' ? 'Sign in as admin' : 'Create account'}</button>
+  </form><button className="link-button" onClick={() => setMode(mode === 'login' ? 'register' : 'login')}>{mode === 'login' ? 'Need an account? Register' : 'Back to user sign in'}</button>{mode !== 'admin' && <button className="link-button" onClick={() => setMode('admin')}>Administrator login</button>}</section></main>;
 }
 
 function App() {
   const [user, setUser] = useState<User | null>(null);
   if (!user) return <Auth onLogin={setUser} />;
-  return <Dashboard user={user} onLogout={async () => { await api.logout(); setUser(null); }} />;
+  return user.role === 'ADMIN' ? <AdminDashboard user={user} onLogout={async () => { await api.logout(); setUser(null); }} /> : <Dashboard user={user} onLogout={async () => { await api.logout(); setUser(null); }} />;
+}
+
+function AdminDashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
+  const [data, setData] = useState<AdminOverview>(); const [error, setError] = useState('');
+  useEffect(() => { api.adminOverview().then(setData).catch(err => setError(err.message)); }, []);
+  return <div className="app-shell"><aside><div className="sidebar-brand"><span className="brand-mark small">PD</span><span>Portfolio Admin</span></div><p className="sidebar-label">ADMIN CONSOLE</p><p className="muted" style={{ padding: '0 10px', color: '#aebbd0' }}>Global read-only oversight of users, holdings, and activity.</p><div className="sidebar-bottom"><div className="user-chip"><span className="avatar">A</span><div><strong>{user.name}</strong><small>{user.email}</small></div></div><button className="nav-item" onClick={onLogout}><span>↪</span>Sign out</button></div></aside><main className="content"><header><div><p className="eyebrow">ADMINISTRATOR CONSOLE</p><h2>System overview</h2></div><span className="pill buy-pill">ADMIN</span></header>{error && <div className="notice">{error}</div>}<div className="metric-grid">{[['Registered users', data?.counts.users], ['Companies', data?.counts.companies], ['Stocks', data?.counts.stocks], ['Active portfolios', data?.counts.activePortfolios]].map(([label, value]) => <Metric key={String(label)} label={String(label)} value={String(value ?? 0)} />)}</div><div className="section-row"><section className="panel wide-panel"><div className="panel-heading"><div><p className="eyebrow">ALL USERS</p><h3>Registered accounts</h3></div></div><div className="table-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Created</th></tr></thead><tbody>{data?.users.map(item => <tr key={item.id}><td>{item.name}</td><td>{item.email}</td><td><span className="pill buy-pill">{item.role}</span></td><td>{new Date(item.createdAt).toLocaleDateString('en-IN')}</td></tr>)}</tbody></table></div></section><section className="panel"><div className="panel-heading"><div><p className="eyebrow">ALL HOLDINGS</p><h3>Portfolio positions</h3></div></div>{data?.portfolios.map((item, i) => <div className="activity-row" key={`${item.user.email}-${item.stock.symbol}-${i}`}><span className="activity-dot buy"></span><div><strong>{item.stock.symbol} · {item.user.name}</strong><small>{item.user.email}</small></div><b>{number(item.quantityHeld)} shares</b></div>)}</section></div></main></div>;
 }
 
 function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {

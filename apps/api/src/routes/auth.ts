@@ -5,7 +5,7 @@ import { loginSchema, parseBody, registerSchema } from '../validation';
 
 export const authRouter = Router();
 
-function setSession(res: import('express').Response, user: { id: number; email: string; name: string }) {
+function setSession(res: import('express').Response, user: { id: number; email: string; name: string; role: 'USER' | 'ADMIN' }) {
   res.cookie('portfolio_token', signToken(user), { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production', maxAge: 7 * 24 * 60 * 60 * 1000 });
 }
 
@@ -23,7 +23,7 @@ authRouter.post('/register', async (req, res, next) => {
       },
       select: { id: true, name: true, email: true },
     });
-    setSession(res, user);
+    setSession(res, { ...user, role: 'USER' });
     return res.status(201).json({ user });
   } catch (error) { return next(error); }
 });
@@ -33,7 +33,20 @@ authRouter.post('/login', async (req, res, next) => {
     const input = parseBody(loginSchema, req.body);
     const user = await prisma.user.findUnique({ where: { email: input.email } });
     if (!user || !(await verifyPassword(input.password, user.passwordHash))) return res.status(401).json({ code: 'INVALID_CREDENTIALS', message: 'Email or password is incorrect' });
-    const safeUser = { id: user.id, name: user.name, email: user.email };
+    const safeUser = { id: user.id, name: user.name, email: user.email, role: user.role };
+    setSession(res, safeUser);
+    return res.json({ user: safeUser });
+  } catch (error) { return next(error); }
+});
+
+authRouter.post('/admin-login', async (req, res, next) => {
+  try {
+    const input = parseBody(loginSchema, req.body);
+    const user = await prisma.user.findUnique({ where: { email: input.email } });
+    if (!user || user.role !== 'ADMIN' || !(await verifyPassword(input.password, user.passwordHash))) {
+      return res.status(401).json({ code: 'INVALID_ADMIN_CREDENTIALS', message: 'Admin email or password is incorrect' });
+    }
+    const safeUser = { id: user.id, name: user.name, email: user.email, role: user.role };
     setSession(res, safeUser);
     return res.json({ user: safeUser });
   } catch (error) { return next(error); }

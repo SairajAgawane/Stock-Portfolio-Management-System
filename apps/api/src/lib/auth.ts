@@ -12,10 +12,10 @@ export async function verifyPassword(password: string, hash: string) {
   return bcrypt.compare(password, hash);
 }
 
-export function signToken(user: { id: number; email: string; name: string }) {
+export function signToken(user: { id: number; email: string; name: string; role: 'USER' | 'ADMIN' }) {
   return jwt.sign(user, jwtSecret, { expiresIn: '7d' });
 }
 
 export function verifyToken(token: string) {
-  return jwt.verify(token, jwtSecret) as unknown as { id: number; email: string; name: string };
+  return jwt.verify(token, jwtSecret) as unknown as { id: number; email: string; name: string; role: 'USER' | 'ADMIN' };
 }

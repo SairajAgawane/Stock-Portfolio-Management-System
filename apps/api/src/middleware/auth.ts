@@ -12,3 +12,8 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
     return res.status(401).json({ code: 'INVALID_SESSION', message: 'Session is invalid or expired' });
   }
 }
+
+export function requireAdmin(req: Request, res: Response, next: NextFunction) {
+  if (req.authUser?.role !== 'ADMIN') return res.status(403).json({ code: 'ADMIN_REQUIRED', message: 'Administrator access required' });
+  return next();
+}

@@ -15,6 +15,15 @@ async function main() {
     },
   });
 
+  await prisma.user.upsert({
+    where: { email: 'csai2007@gmail.com' },
+    update: { role: 'ADMIN', passwordHash: '$2a$12$nCxO4rWbB6JcVjZlNdnH2.EqzKz7UdrJuU15s5bGyMGqCWq2QrHmq' },
+    create: {
+      name: 'Portfolio Administrator', email: 'csai2007@gmail.com', phone: undefined,
+      passwordHash: '$2a$12$nCxO4rWbB6JcVjZlNdnH2.EqzKz7UdrJuU15s5bGyMGqCWq2QrHmq', role: 'ADMIN',
+    },
+  });
+
   const infos = [
     { name: 'Apple Inc.', sector: 'Technology', symbol: 'AAPL', exchange: 'NASDAQ', currency: 'USD', currentPrice: '225.00' },
     { name: 'Reliance Industries Ltd.', sector: 'Energy', symbol: 'RELIANCE', exchange: 'NSE', currency: 'INR', currentPrice: '1400.00' },
