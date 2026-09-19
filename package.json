@@ -13,8 +13,10 @@
     "prisma:studio": "prisma studio",
     "api:dev": "pnpm --dir apps/api dev",
     "api:build": "pnpm --dir apps/api build",
-    "api:start": "pnpm --dir apps/api start"
-    ,"test": "pnpm --dir apps/api test"
+    "api:start": "pnpm --dir apps/api start",
+    "build": "pnpm --dir apps/api build",
+    "start": "pnpm --dir apps/api start",
+    "test": "pnpm --dir apps/api test"
   },
   "devDependencies": {
     "@prisma/client": "^6.16.0",
