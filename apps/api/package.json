@@ -3,6 +3,7 @@
   "private": true,
   "scripts": {
     "dev": "tsx watch src/server.ts",
+    "prebuild": "cd ../.. && prisma generate",
     "build": "tsc -p tsconfig.json",
     "start": "node dist/server.js",
     "test:smoke": "tsx scripts/smoke-test.ts",
