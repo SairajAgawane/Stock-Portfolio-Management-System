@@ -12,6 +12,7 @@
     "prisma:deploy": "prisma migrate deploy",
     "prisma:seed": "prisma db seed",
     "prisma:studio": "prisma studio",
+    "postinstall": "prisma generate",
     "api:dev": "pnpm --dir apps/api dev",
     "api:build": "pnpm --dir apps/api build",
     "api:start": "pnpm --dir apps/api start",
