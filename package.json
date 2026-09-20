@@ -3,6 +3,7 @@
   "private": true,
   "packageManager": "pnpm@9.15.0",
   "scripts": {
+    "postinstall": "prisma generate",
     "db:up": "docker compose up -d db",
     "db:down": "docker compose down",
     "db:logs": "docker compose logs -f db",
