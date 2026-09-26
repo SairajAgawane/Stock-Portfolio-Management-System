@@ -16,6 +16,7 @@
     "api:build": "pnpm --dir apps/api build",
     "api:start": "pnpm --dir apps/api start",
     "build": "pnpm --dir apps/api build",
+    "prestart": "prisma migrate deploy",
     "start": "pnpm --dir apps/api start",
     "test": "pnpm --dir apps/api test"
   },
