@@ -10,18 +10,29 @@ function Auth({ onLogin }: { onLogin: (user: User) => void }) {
   const [form, setForm] = useState({ name: '', email: '', password: '', phone: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [otp, setOtp] = useState('');
+  const [otpRequested, setOtpRequested] = useState(false);
   async function submit(event: FormEvent) {
     event.preventDefault(); setError('');
-    try { const result = mode === 'register' ? await api.register(form) : mode === 'admin' ? await api.adminLogin(form) : await api.login(form); onLogin(result.user); }
+    try {
+      if (mode === 'register' && !otpRequested) {
+        const result = await api.requestOtp(form);
+        setOtpRequested(true);
+        setError(result.devOtp ? `Development OTP: ${result.devOtp}` : result.message);
+        return;
+      }
+      const result = mode === 'register' ? await api.verifyOtp({ email: form.email, otp }) : mode === 'admin' ? await api.adminLogin(form) : await api.login(form);
+      onLogin(result.user);
+    }
     catch (err) { setError(err instanceof Error ? err.message : 'Unable to continue'); }
   }
-  return <main className="auth-shell"><section className="auth-card"><div className="brand-mark">PD</div><p className="eyebrow">{mode === 'admin' ? 'ADMINISTRATOR ACCESS' : 'PERSONAL WEALTH WORKSPACE'}</p><h1>{mode === 'login' ? 'Welcome back.' : mode === 'admin' ? 'Admin sign in.' : 'Create your desk.'}</h1><p className="muted">{mode === 'admin' ? 'Review all users, portfolios, and investment activity.' : 'Track holdings, transactions, and performance in one calm view.'}</p><form onSubmit={submit}>
+  return <main className="auth-shell"><section className="auth-card"><div className="brand-mark">PD</div><p className="eyebrow">{mode === 'admin' ? 'ADMINISTRATOR ACCESS' : 'PERSONAL WEALTH WORKSPACE'}</p><h1>{mode === 'login' ? 'Welcome back.' : mode === 'admin' ? 'Admin sign in.' : otpRequested ? 'Verify your email.' : 'Create your desk.'}</h1><p className="muted">{mode === 'admin' ? 'Review all users, portfolios, and investment activity.' : otpRequested ? `Enter the 6-digit code sent to ${form.email}.` : 'Track holdings, transactions, and performance in one calm view.'}</p><form onSubmit={submit}>
     {mode === 'register' && <input placeholder="Full name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required />}
     <input type="email" placeholder="Email address" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} required />
-    <div className="password-field"><input type={showPassword ? 'text' : 'password'} placeholder="Password" minLength={8} value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} required /><button type="button" className="show-password" onClick={() => setShowPassword(!showPassword)}>{showPassword ? 'Hide' : 'Show'}</button></div>
+    {mode !== 'register' || !otpRequested ? <div className="password-field"><input type={showPassword ? 'text' : 'password'} placeholder="Password" minLength={8} value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} required /><button type="button" className="show-password" onClick={() => setShowPassword(!showPassword)}>{showPassword ? 'Hide' : 'Show'}</button></div> : <input inputMode="numeric" pattern="[0-9]{6}" maxLength={6} placeholder="6-digit OTP" value={otp} onChange={e => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))} required />}
     {mode === 'register' && <input placeholder="Phone (optional)" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} />}
-    {error && <p className="error">{error}</p>}<button className="primary wide">{mode === 'login' ? 'Sign in' : mode === 'admin' ? 'Sign in as admin' : 'Create account'}</button>
-  </form><button className="link-button" onClick={() => setMode(mode === 'login' ? 'register' : 'login')}>{mode === 'login' ? 'Need an account? Register' : 'Back to user sign in'}</button>{mode !== 'admin' && <button className="link-button" onClick={() => setMode('admin')}>Administrator login</button>}</section></main>;
+    {error && <p className={error === 'Invalid OTP' || error.includes('incorrect') ? 'error' : 'notice'}>{error}</p>}<button className="primary wide">{mode === 'login' ? 'Sign in' : mode === 'admin' ? 'Sign in as admin' : otpRequested ? 'Verify OTP and create account' : 'Send OTP'}</button>
+  </form>{mode === 'register' && otpRequested && <button className="link-button" onClick={() => { setOtpRequested(false); setOtp(''); setError(''); }}>Change details / resend OTP</button>}<button className="link-button" onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); setOtpRequested(false); setOtp(''); setError(''); }}>{mode === 'login' ? 'Need an account? Register' : 'Back to user sign in'}</button>{mode !== 'admin' && <button className="link-button" onClick={() => { setMode('admin'); setOtpRequested(false); setOtp(''); setError(''); }}>Administrator login</button>}</section></main>;
 }
 
 function App() {

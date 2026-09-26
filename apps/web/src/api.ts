@@ -19,6 +19,8 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 }
 
 export const api = {
+  requestOtp: (body: object) => request<{ message: string; devOtp?: string }>('/api/auth/register/request-otp', { method: 'POST', body: JSON.stringify(body) }),
+  verifyOtp: (body: object) => request<{ user: User }>('/api/auth/register/verify-otp', { method: 'POST', body: JSON.stringify(body) }),
   register: (body: object) => request<{ user: User }>('/api/auth/register', { method: 'POST', body: JSON.stringify(body) }),
   login: (body: object) => request<{ user: User }>('/api/auth/login', { method: 'POST', body: JSON.stringify(body) }),
   adminLogin: (body: object) => request<{ user: User }>('/api/auth/admin-login', { method: 'POST', body: JSON.stringify(body) }),

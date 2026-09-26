@@ -7,6 +7,11 @@ export const registerSchema = z.object({
   phone: z.string().trim().max(30).optional(),
 });
 
+export const verifyOtpSchema = z.object({
+  email: z.string().trim().toLowerCase().email(),
+  otp: z.string().trim().regex(/^\d{6}$/, 'OTP must be a 6-digit number'),
+});
+
 export const loginSchema = z.object({ email: z.string().trim().toLowerCase().email(), password: z.string().min(1) });
 export const companySchema = z.object({ name: z.string().trim().min(2).max(160), sector: z.string().trim().max(100).optional() });
 export const stockSchema = z.object({

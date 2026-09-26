@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { loginSchema, registerSchema, tradeSchema } from '../src/validation';
+import { loginSchema, registerSchema, tradeSchema, verifyOtpSchema } from '../src/validation';
 
 test('registration normalizes email and accepts a valid account', () => {
   const result = registerSchema.parse({ name: 'Demo Investor', email: '  DEMO@EXAMPLE.COM ', password: 'Demo@12345' });
@@ -13,6 +13,12 @@ test('registration rejects short passwords', () => {
 
 test('login requires a valid email', () => {
   assert.throws(() => loginSchema.parse({ email: 'not-an-email', password: 'Demo@12345' }));
+});
+
+test('OTP must be exactly six digits', () => {
+  assert.equal(verifyOtpSchema.parse({ email: 'demo@example.com', otp: '123456' }).otp, '123456');
+  assert.throws(() => verifyOtpSchema.parse({ email: 'demo@example.com', otp: '12345' }));
+  assert.throws(() => verifyOtpSchema.parse({ email: 'demo@example.com', otp: 'abcdef' }));
 });
 
 test('trade input applies a date default and rejects negative values', () => {

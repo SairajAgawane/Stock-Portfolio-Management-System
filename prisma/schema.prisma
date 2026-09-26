@@ -28,6 +28,21 @@ model User {
   @@map("users")
 }
 
+model RegistrationOtp {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique @db.VarChar(255)
+  name         String   @db.VarChar(120)
+  phone        String?  @db.VarChar(30)
+  passwordHash String   @map("password_hash") @db.VarChar(255)
+  otpHash      String   @map("otp_hash") @db.Char(64)
+  expiresAt    DateTime @map("expires_at")
+  attempts     Int      @default(0)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([expiresAt])
+  @@map("registration_otps")
+}
+
 model Company {
   id        Int      @id @default(autoincrement())
   name      String   @db.VarChar(160)
