@@ -13,7 +13,7 @@ pnpm prisma:seed
 pnpm prisma studio
 ```
 
-Open the Prisma Studio URL shown in the terminal (normally `http://localhost:5555`). The left side lists every table, including `users`, `companies`, `stocks`, `buy_transactions`, `sell_transactions`, `portfolio`, and `registration_otps`.
+Open the Prisma Studio URL shown in the terminal (normally `http://localhost:5555`). The left side lists every table, including `users`, `companies`, `stocks`, `stock_price_history`, `buy_transactions`, `sell_transactions`, `portfolio`, and `registration_otps`.
 
 If Prisma Studio displays an error, first run `pnpm prisma:generate`, stop any old Studio process with `Ctrl+C`, and run `pnpm prisma studio` again. The SQL commands below are an alternative that does not depend on Studio.
 

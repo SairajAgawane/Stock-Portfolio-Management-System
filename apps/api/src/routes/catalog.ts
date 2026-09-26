@@ -28,6 +28,21 @@ catalogRouter.get('/stocks', async (req, res, next) => {
   } catch (error) { return next(error); }
 });
 
+catalogRouter.get('/history', async (req, res, next) => {
+  try {
+    const stockId = Number(req.query.stockId);
+    const days = Math.min(Math.max(Number(req.query.days ?? 30), 7), 90);
+    if (!Number.isInteger(stockId) || stockId <= 0) return res.status(400).json({ code: 'INVALID_STOCK', message: 'A valid stockId is required' });
+    const history = await prisma.stockPriceHistory.findMany({
+      where: { stockId },
+      include: { stock: { include: { company: true } } },
+      orderBy: { tradeDate: 'desc' },
+      take: days,
+    });
+    return res.json({ history: history.reverse() });
+  } catch (error) { return next(error); }
+});
+
 catalogRouter.post('/stocks', async (req, res, next) => {
   try { return res.status(201).json({ stock: await prisma.stock.create({ data: parseBody(stockSchema, req.body) }) }); } catch (error) { return next(error); }
 });

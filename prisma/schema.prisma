@@ -68,11 +68,26 @@ model Stock {
   buyTransactions BuyTransaction[]
   sellTransactions SellTransaction[]
   portfolios      Portfolio[]
+  priceHistory    StockPriceHistory[]
 
   @@unique([symbol, exchange])
   @@index([companyId])
   @@index([symbol])
   @@map("stocks")
+}
+
+model StockPriceHistory {
+  id           Int      @id @default(autoincrement())
+  stockId      Int      @map("stock_id")
+  tradeDate    DateTime @map("trade_date") @db.Date
+  closingPrice Decimal  @map("closing_price") @db.Decimal(19, 4)
+  dailyChange  Decimal  @default(0) @map("daily_change") @db.Decimal(9, 4)
+  createdAt    DateTime @default(now()) @map("created_at")
+  stock        Stock    @relation(fields: [stockId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([stockId, tradeDate])
+  @@index([stockId, tradeDate])
+  @@map("stock_price_history")
 }
 
 model BuyTransaction {

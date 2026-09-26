@@ -4,6 +4,7 @@ SHOW TABLES;
 SELECT * FROM users ORDER BY id;
 SELECT * FROM companies ORDER BY id;
 SELECT * FROM stocks ORDER BY id;
+SELECT * FROM stock_price_history ORDER BY trade_date DESC, stock_id;
 SELECT * FROM buy_transactions ORDER BY id;
 SELECT * FROM sell_transactions ORDER BY id;
 SELECT * FROM portfolio ORDER BY id;
