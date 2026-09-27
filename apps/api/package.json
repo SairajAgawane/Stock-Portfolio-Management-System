@@ -5,6 +5,7 @@
     "dev": "tsx watch src/server.ts",
     "prebuild": "cd ../.. && prisma generate",
     "build": "tsc -p tsconfig.json",
+    "prestart": "cd ../.. && prisma migrate deploy && prisma db seed",
     "start": "node dist/server.js",
     "test:smoke": "tsx scripts/smoke-test.ts",
     "test:unit": "tsx --test tests/**/*.test.ts",
