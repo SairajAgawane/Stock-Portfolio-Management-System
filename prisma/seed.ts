@@ -17,10 +17,10 @@ async function main() {
 
   await prisma.user.upsert({
     where: { email: 'csai2007@gmail.com' },
-    update: { role: 'ADMIN', passwordHash: '$2a$12$VkVPtEFO0WOf5yxg92TaPOzZCcxa9ykZRYiD.M6eoqOh0LW2urUJK' },
+    update: { role: 'ADMIN', passwordHash: '$2a$12$uHkfIcQ6gl1lAXjmW0B6PutWJrteMNwfUPVU.VHh13d1UOwf3T9Q6' },
     create: {
       name: 'Portfolio Administrator', email: 'csai2007@gmail.com', phone: undefined,
-      passwordHash: '$2a$12$VkVPtEFO0WOf5yxg92TaPOzZCcxa9ykZRYiD.M6eoqOh0LW2urUJK', role: 'ADMIN',
+      passwordHash: '$2a$12$uHkfIcQ6gl1lAXjmW0B6PutWJrteMNwfUPVU.VHh13d1UOwf3T9Q6', role: 'ADMIN',
     },
   });
 
