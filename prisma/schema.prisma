@@ -10,6 +10,7 @@ datasource db {
 enum UserRole {
   USER
   ADMIN
+  SUPER_ADMIN
 }
 
 model User {
@@ -24,6 +25,8 @@ model User {
   buyTransactions BuyTransaction[]
   sellTransactions SellTransaction[]
   portfolios      Portfolio[]
+  watchlists      Watchlist[]
+  auditLogs       AuditLog[]
 
   @@map("users")
 }
@@ -41,6 +44,18 @@ model RegistrationOtp {
 
   @@index([expiresAt])
   @@map("registration_otps")
+}
+
+model PasswordResetToken {
+  id        Int      @id @default(autoincrement())
+  email     String   @db.VarChar(255)
+  tokenHash String   @map("token_hash") @db.VarChar(255)
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([email])
+  @@index([expiresAt])
+  @@map("password_reset_tokens")
 }
 
 model Company {
@@ -69,6 +84,7 @@ model Stock {
   sellTransactions SellTransaction[]
   portfolios      Portfolio[]
   priceHistory    StockPriceHistory[]
+  watchlists      Watchlist[]
 
   @@unique([symbol, exchange])
   @@index([companyId])
@@ -139,4 +155,32 @@ model Portfolio {
   @@unique([userId, stockId])
   @@index([userId])
   @@map("portfolio")
+}
+
+model Watchlist {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  stockId   Int      @map("stock_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stock     Stock    @relation(fields: [stockId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, stockId])
+  @@map("watchlists")
+}
+
+model AuditLog {
+  id        Int      @id @default(autoincrement())
+  userId    Int?     @map("user_id")
+  action    String   @db.VarChar(255)
+  details   Json?
+  ipAddress String?  @map("ip_address") @db.VarChar(45)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([action])
+  @@map("audit_logs")
 }
