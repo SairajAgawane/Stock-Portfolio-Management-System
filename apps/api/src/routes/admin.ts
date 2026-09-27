@@ -23,3 +23,23 @@ adminRouter.get('/transactions', async (_req, res, next) => {
     return res.json({ buys, sells });
   } catch (error) { return next(error); }
 });
+
+import { updateAllStockPrices } from '../lib/marketData';
+adminRouter.post('/refresh-market', async (_req, res, next) => {
+  try {
+    // Fire and forget so we don't block the request if rate-limited by provider
+    updateAllStockPrices().catch(console.error);
+    return res.json({ message: 'Market data refresh triggered in background' });
+  } catch (error) { return next(error); }
+});
+
+adminRouter.get('/audit-logs', async (_req, res, next) => {
+  try {
+    const logs = await prisma.auditLog.findMany({
+      include: { user: { select: { name: true, email: true } } },
+      orderBy: { createdAt: 'desc' },
+      take: 100
+    });
+    return res.json({ logs });
+  } catch (error) { return next(error); }
+});

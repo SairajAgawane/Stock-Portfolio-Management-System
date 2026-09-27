@@ -22,7 +22,11 @@ portfolioRouter.get('/transactions', async (req, res, next) => {
 portfolioRouter.post('/buy', async (req, res, next) => {
   try {
     const input = parseBody(tradeSchema, req.body);
-    const transaction = await prisma.buyTransaction.create({ data: { ...input, tradeDate: input.tradeDate ?? new Date(), userId: req.authUser!.id } });
+    const transaction = await prisma.$transaction(async (tx) => {
+      const created = await tx.buyTransaction.create({ data: { ...input, tradeDate: input.tradeDate ?? new Date(), userId: req.authUser!.id } });
+      await tx.auditLog.create({ data: { userId: req.authUser!.id, action: 'BUY', details: { ...input }, ipAddress: req.ip ?? req.socket.remoteAddress } });
+      return created;
+    });
     return res.status(201).json({ transaction });
   } catch (error) { return next(error); }
 });
@@ -41,7 +45,9 @@ portfolioRouter.post('/sell', async (req, res, next) => {
         error.name = 'INSUFFICIENT_HOLDINGS';
         throw error;
       }
-      return tx.sellTransaction.create({ data: { ...input, tradeDate: input.tradeDate ?? new Date(), userId: req.authUser!.id } });
+      const created = await tx.sellTransaction.create({ data: { ...input, tradeDate: input.tradeDate ?? new Date(), userId: req.authUser!.id } });
+      await tx.auditLog.create({ data: { userId: req.authUser!.id, action: 'SELL', details: { ...input }, ipAddress: req.ip ?? req.socket.remoteAddress } });
+      return created;
     });
     return res.status(201).json({ transaction });
   } catch (error) { return next(error); }
@@ -63,6 +69,30 @@ portfolioRouter.get('/reports/summary', async (req, res, next) => {
       )), 0) AS realized_pnl
       FROM sell_transactions s WHERE s.user_id = ${req.authUser!.id}
     `);
-    return res.json({ summary: { ...summary, realizedPnl: realized?.realized_pnl ?? 0 } });
+    
+    const allocations = await prisma.$queryRaw<any[]>(Prisma.sql`
+      SELECT c.sector, SUM(vp.market_value) as total_value
+      FROM v_current_portfolio vp
+      JOIN stocks s ON s.id = vp.stock_id
+      JOIN companies c ON c.id = s.company_id
+      WHERE vp.user_id = ${req.authUser!.id}
+      GROUP BY c.sector
+      ORDER BY total_value DESC
+    `);
+
+    const totalMarketValue = Number(summary?.market_value ?? 0);
+    const sectorAllocation = allocations.map(a => ({
+      sector: a.sector ?? 'Unknown',
+      value: Number(a.total_value),
+      percentage: totalMarketValue > 0 ? (Number(a.total_value) / totalMarketValue) * 100 : 0
+    }));
+
+    return res.json({ 
+      summary: { 
+        ...summary, 
+        realizedPnl: realized?.realized_pnl ?? 0,
+        sectorAllocation
+      } 
+    });
   } catch (error) { return next(error); }
 });

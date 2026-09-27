@@ -14,6 +14,8 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
 }
 
 export function requireAdmin(req: Request, res: Response, next: NextFunction) {
-  if (req.authUser?.role !== 'ADMIN') return res.status(403).json({ code: 'ADMIN_REQUIRED', message: 'Administrator access required' });
+  if (req.authUser?.role !== 'ADMIN' && req.authUser?.role !== 'SUPER_ADMIN') {
+    return res.status(403).json({ code: 'ADMIN_REQUIRED', message: 'Administrator access required' });
+  }
   return next();
 }

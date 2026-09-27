@@ -8,6 +8,7 @@ import { authRouter } from './routes/auth';
 import { catalogRouter } from './routes/catalog';
 import { portfolioRouter } from './routes/portfolio';
 import { adminRouter } from './routes/admin';
+import { watchlistRouter } from './routes/watchlist';
 import { ZodError } from 'zod';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
@@ -28,18 +29,27 @@ app.get('/api/health', async (_req, res) => {
 app.use('/api/auth', authRouter);
 app.use('/api/catalog', requireAuth, catalogRouter);
 app.use('/api/portfolio', requireAuth, portfolioRouter);
+app.use('/api/watchlist', requireAuth, watchlistRouter);
 app.use('/api/admin', requireAuth, requireAdmin, adminRouter);
 
 app.use((error: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   if (error instanceof ZodError) return res.status(400).json({ code: 'VALIDATION_ERROR', message: 'Request validation failed', details: error.flatten() });
   if (error instanceof Error && error.name === 'INSUFFICIENT_HOLDINGS') return res.status(409).json({ code: error.name, message: error.message });
   if (error instanceof Error && error.name === 'EMAIL_EXISTS') return res.status(409).json({ code: error.name, message: error.message });
-  if (error instanceof Error && error.name === 'OTP_EMAIL_NOT_CONFIGURED') return res.status(503).json({ code: error.name, message: error.message });
+  if (error instanceof Error && error.name === 'EMAIL_NOT_CONFIGURED') return res.status(503).json({ code: error.name, message: error.message });
+  if (error instanceof Error && error.name === 'FIREBASE_NOT_CONFIGURED') return res.status(503).json({ code: error.name, message: error.message });
+  if (error instanceof Error && error.name === 'FIREBASE_AUTH_FAILED') return res.status(502).json({ code: error.name, message: error.message });
+  if (error instanceof Error && error.name === 'WEAK_PASSWORD') return res.status(400).json({ code: error.name, message: error.message });
   console.error(error);
   return res.status(500).json({ code: 'INTERNAL_ERROR', message: 'Unexpected server error' });
 });
 
-const server = app.listen(port, () => console.log(`API listening on http://localhost:${port}`));
+import { startMarketDataJob } from './lib/marketData';
+
+const server = app.listen(port, () => {
+  console.log(`API listening on http://localhost:${port}`);
+  startMarketDataJob();
+});
 
 async function shutdown() {
   server.close();
