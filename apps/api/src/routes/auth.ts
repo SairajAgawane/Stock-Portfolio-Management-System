@@ -9,7 +9,14 @@ import { z } from 'zod';
 
 export const authRouter = Router();
 
-const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 10, standardHeaders: 'draft-7', legacyHeaders: false, message: 'Too many login attempts, please try again later' });
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  skipSuccessfulRequests: true,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  message: 'Too many failed login attempts, please try again later',
+});
 const otpLimiter = rateLimit({ windowMs: 60 * 60 * 1000, limit: 5, standardHeaders: 'draft-7', legacyHeaders: false, message: 'Too many OTP requests, please try again later' });
 
 async function createFirebaseAccount(email: string, password: string) {
