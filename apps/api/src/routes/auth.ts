@@ -30,7 +30,15 @@ async function createFirebaseAccount(email: string, password: string) {
 }
 
 function setSession(res: import('express').Response, user: { id: number; email: string; name: string; role: 'USER' | 'ADMIN' | 'SUPER_ADMIN' }) {
-  res.cookie('portfolio_token', signToken(user), { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production', maxAge: 7 * 24 * 60 * 60 * 1000 });
+  // Vercel hosts the web app while Railway hosts the API, so the session
+  // cookie must be allowed on cross-site fetches in production.
+  const isProduction = process.env.NODE_ENV === 'production';
+  res.cookie('portfolio_token', signToken(user), {
+    httpOnly: true,
+    sameSite: isProduction ? 'none' : 'lax',
+    secure: isProduction,
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  });
 }
 
 function otpHash(otp: string) {
