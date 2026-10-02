@@ -9,7 +9,7 @@
     "start": "node dist/server.js",
     "test:smoke": "tsx scripts/smoke-test.ts",
     "test:unit": "tsx --test tests/**/*.test.ts",
-    "test": "pnpm test:unit"
+    "test": "tsx --test tests/**/*.test.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.16.0",

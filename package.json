@@ -1,7 +1,6 @@
 {
   "name": "stock-portfolio-management",
   "private": true,
-  "packageManager": "pnpm@9.15.0",
   "scripts": {
     "postinstall": "prisma generate",
     "db:up": "docker compose up -d db",
@@ -12,13 +11,13 @@
     "prisma:deploy": "prisma migrate deploy",
     "prisma:seed": "prisma db seed",
     "prisma:studio": "prisma studio",
-    "api:dev": "pnpm --dir apps/api dev",
-    "api:build": "pnpm --dir apps/api build",
-    "api:start": "pnpm --dir apps/api start",
-    "build": "pnpm --dir apps/api build",
+    "api:dev": "npm --prefix apps/api run dev",
+    "api:build": "npm --prefix apps/api run build",
+    "api:start": "npm --prefix apps/api start",
+    "build": "npm --prefix apps/api run build",
     "prestart": "prisma migrate deploy && prisma db seed",
-    "start": "pnpm --dir apps/api start",
-    "test": "pnpm --dir apps/api test"
+    "start": "npm --prefix apps/api start",
+    "test": "npm --prefix apps/api test"
   },
   "devDependencies": {
     "@prisma/client": "^6.16.0",
@@ -28,5 +27,9 @@
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
-  }
+  },
+  "workspaces": [
+    "apps/api",
+    "apps/web"
+  ]
 }
